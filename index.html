@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>值日生日曆（含背景與顏色示意）</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-image: url('https://via.placeholder.com/800x600?text=背景圖示意');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .nav-buttons {
+      margin-bottom: 10px;
+    }
+    button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      max-width: 400px;
+      margin: auto;
+      border-collapse: collapse;
+      background: white;
+      opacity: 0.9;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .today {
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 3px black;
+    }
+    .duty-1 { background-color: #FFA07A; } /* 宸瑜 - 橘色 */
+    .duty-2 { background-color: #ADD8E6; } /* 宸瑄 - 淺藍 */
+    .duty-3 { background-color: #98FB98; } /* 量量 - 淺綠 */
+    .duty-4 { background-color: #FFD700; } /* 品潔 - 金色 */
+    .duty-5 { background-color: #FFC0CB; } /* 依伶 - 粉紅 */
+    .duty-6 { background-color: #DDA0DD; } /* 喜得 - 淡紫 */
+
+    .legend-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 30px;
+      background: white;
+      opacity: 0.9;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="monthYear"></h1>
+  <div class="nav-buttons">
+    <button onclick="changeMonth(-1)">← 上個月</button>
+    <button onclick="changeMonth(1)">下個月 →</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+      </tr>
+    </thead>
+    <tbody id="calendarBody"></tbody>
+  </table>
+
+  <h2>本週值日生</h2>
+  <p id="dutyPerson">待安排</p>
+
+  <div class="legend-container">
+    <div class="legend-item"><div class="legend-color" style="background-color: #FFA07A;"></div> 宸瑜</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #ADD8E6;"></div> 宸瑄</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #98FB98;"></div> 量量</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #FFD700;"></div> 品潔</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #FFC0CB;"></div> 依伶</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #DDA0DD;"></div> 喜得</div>
+  </div>
+
+  <script>
+    const dutyRoster = ["宸瑜", "宸瑄", "量量", "品潔", "依伶", "喜得"];
+    const baseDate = new Date(2024, 2, 17);
+    const offset = 2;
+    let currentDate = new Date();
+
+    function generateCalendar(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const today = new Date();
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth();
+      const todayDate = today.getDate();
+      const firstDay = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      document.getElementById("monthYear").innerText = `${year} 年 ${month + 1} 月`;
+      const calendarBody = document.getElementById("calendarBody");
+      calendarBody.innerHTML = "";
+
+      let row = document.createElement("tr");
+      for (let i = 0; i < firstDay; i++) {
+        row.appendChild(document.createElement("td"));
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement("td");
+        cell.innerText = day;
+
+        const thisDate = new Date(year, month, day);
+        const thisMonday = new Date(thisDate);
+        thisMonday.setDate(thisDate.getDate() - ((thisDate.getDay() + 6) % 7));
+
+        let weekDiff = Math.floor((thisMonday - baseDate) / (7 * 24 * 60 * 60 * 1000));
+        let dutyIndex = ((weekDiff + offset) % dutyRoster.length + dutyRoster.length) % dutyRoster.length;
+
+        cell.classList.add(`duty-${dutyIndex + 1}`);
+        cell.setAttribute("data-duty", dutyRoster[dutyIndex]);
+
+        if (year === todayYear && month === todayMonth && day === todayDate) {
+          cell.classList.add("today");
+          document.getElementById("dutyPerson").innerText = `本週值日生: ${dutyRoster[dutyIndex]}`;
+        }
+
+        row.appendChild(cell);
+        if ((firstDay + day) % 7 === 0) {
+          calendarBody.appendChild(row);
+          row = document.createElement("tr");
+        }
+      }
+
+      if (row.childElementCount > 0) {
+        calendarBody.appendChild(row);
+      }
+    }
+
+    function changeMonth(diff) {
+      currentDate.setMonth(currentDate.getMonth() + diff);
+      generateCalendar(currentDate);
+    }
+
+    generateCalendar(currentDate);
+  </script>
+</body>
+</html>
